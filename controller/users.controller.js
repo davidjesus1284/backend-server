@@ -33,11 +33,26 @@ const getAll = async(req, res = response) => {
 
 const get = async(req, res = response) => {
     const uid = req.params.id;
-    const user = await Users.findById(uid);
-    res.json({
-        ok: true,
-        user
-    });
+
+    try {
+        const user = await Users.findById(uid);
+        if (!user) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Parametros inválidos'
+            });
+        }
+        res.json({
+            ok: true,
+            user
+        });
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            msg: 'Parametros inválidos'
+        });
+    }
+
 };
 
 const create = async(req, res = response) => {
@@ -69,7 +84,7 @@ const create = async(req, res = response) => {
     } catch (error) {
         res.status(501).json({
             ok: false,
-            msg: 'Error contante crear usuario'
+            msg: 'Error al crear usuario'
         });
     }
 };
@@ -89,15 +104,14 @@ const update = async(req, res = response) => {
 
         const { nombre, dni, celular, email } = req.body;
         if (userDB.email != email) {
-            const existEmail = await Users.findOne({ email });
+            const existEmail = await Users.findOne({ $or: [{ email }, { dni }] });
             if (existEmail) {
                 res.status(400).json({
                     ok: false,
-                    msg: 'Ya existe un usuario con ese email'
+                    msg: 'El correo o el dni ya existe'
                 });
             }
         }
-
         const userUpdate = await Users.findByIdAndUpdate(uid, { nombre, dni, celular, email }, { new: true });
 
         res.json({
@@ -107,7 +121,7 @@ const update = async(req, res = response) => {
     } catch (error) {
         res.status(500).json({
             ok: false,
-            msg: 'Error inesperado !!! ver logs'
+            msg: 'Error inesperado'
         });
     }
 };
